@@ -65,6 +65,29 @@
     return div.innerHTML;
   }
 
+  /** Allergien aus Hauptgast + Mitgästen zusammenführen. */
+  function getMergedAllergies(r) {
+    var parts = [];
+    var mainHas = !!(r.allergies_has === 1 || r.allergies_has === true);
+    var mainText = (r.allergies_text != null && String(r.allergies_text).trim()) ? String(r.allergies_text).trim() : '';
+    if (mainHas && mainText) parts.push((r.name || 'Hauptgast') + ': ' + mainText);
+    var guestDetails = Array.isArray(r.guest_details) ? r.guest_details : [];
+    for (var j = 0; j < guestDetails.length; j++) {
+      var g = guestDetails[j];
+      var gHas = !!(g.allergies_has === 1 || g.allergies_has === true);
+      var gText = (g.allergies_text != null && String(g.allergies_text).trim()) ? String(g.allergies_text).trim() : '';
+      if (gHas && gText) parts.push((g.name || 'Gast') + ': ' + gText);
+    }
+    var text = parts.join('; ');
+    return { has: parts.length > 0, text: text };
+  }
+
+  function menuTypeLabel(menuType) {
+    if (menuType === 'vegi') return 'Vegetarisch';
+    if (menuType === 'kids') return 'Kinder';
+    return 'Fleisch';
+  }
+
   function updateDownloadLinks() {
     var q = currentToken ? '?token=' + encodeURIComponent(currentToken) : '';
     if (currentToken) {
@@ -111,7 +134,10 @@
       var r = allRsvps[i];
       if (statusVal === 'yes' && r.attending !== 'yes') continue;
       if (statusVal === 'no' && r.attending !== 'no') continue;
-      if (onlyAllergies && !r.allergies_has) continue;
+      if (onlyAllergies) {
+        var merged = getMergedAllergies(r);
+        if (!merged.has) continue;
+      }
       if (q) {
         var name = (r.name || '').toLowerCase();
         var contact = (r.contact || '').toLowerCase();
@@ -158,6 +184,7 @@
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       var isYes = r.attending === 'yes';
+      var merged = getMergedAllergies(r);
       var delBtn = '<button type="button" class="admin-btn-delete btn-delete" data-id="' + escapeHtml(String(r.id)) + '" title="Anmeldung löschen">Löschen</button>';
       var tr = document.createElement('tr');
       tr.innerHTML =
@@ -169,13 +196,47 @@
         '<td>' + (isYes ? (r.menu_meat != null ? r.menu_meat : dash) : dash) + '</td>' +
         '<td>' + (isYes ? (r.menu_vegi != null ? r.menu_vegi : dash) : dash) + '</td>' +
         '<td>' + (isYes ? (r.menu_kids != null ? r.menu_kids : dash) : dash) + '</td>' +
-        '<td>' + (r.allergies_has ? 'ja' : 'nein') + '</td>' +
-        '<td>' + escapeHtml(r.allergies_text || '') + '</td>' +
+        '<td>' + (merged.has ? 'ja' : 'nein') + '</td>' +
+        '<td>' + escapeHtml(merged.text || '') + '</td>' +
         '<td class="admin-td-action td-action">' + delBtn + '</td>';
       tbody.appendChild(tr);
+      var guestDetails = Array.isArray(r.guest_details) ? r.guest_details : [];
+      for (var gIdx = 0; gIdx < guestDetails.length; gIdx++) {
+        var g = guestDetails[gIdx];
+        var gHasAllergy = !!(g.allergies_has === 1 || g.allergies_has === true);
+        var gAllergyText = (g.allergies_text != null && String(g.allergies_text).trim()) ? String(g.allergies_text).trim() : '';
+        var subTr = document.createElement('tr');
+        subTr.className = 'admin-tr-guest';
+        subTr.innerHTML =
+          '<td class="admin-td-guest-indent">↳</td>' +
+          '<td>' + escapeHtml(g.name || '') + '</td>' +
+          '<td></td><td></td><td></td>' +
+          '<td>' + (g.menu_type === 'meat' ? '1' : dash) + '</td>' +
+          '<td>' + (g.menu_type === 'vegi' ? '1' : dash) + '</td>' +
+          '<td>' + (g.menu_type === 'kids' ? '1' : dash) + '</td>' +
+          '<td>' + (gHasAllergy ? 'ja' : 'nein') + '</td>' +
+          '<td>' + escapeHtml(gAllergyText) + '</td>' +
+          '<td class="admin-td-action"></td>';
+        tbody.appendChild(subTr);
+      }
       if (adminCards) {
         var card = document.createElement('div');
         card.className = 'admin-card-item' + (isYes ? ' admin-card-yes' : ' admin-card-no');
+        var guestBlock = '';
+        if (guestDetails.length > 0) {
+          guestBlock = '<div class="admin-card-guests"><div class="admin-card-guests-title">Mitgäste</div>';
+          for (var gIdx2 = 0; gIdx2 < guestDetails.length; gIdx2++) {
+            var g2 = guestDetails[gIdx2];
+            var g2Has = !!(g2.allergies_has === 1 || g2.allergies_has === true);
+            var g2Text = (g2.allergies_text != null && String(g2.allergies_text).trim()) ? String(g2.allergies_text).trim() : '';
+            guestBlock += '<div class="admin-card-guest-sub">' +
+              '<span class="admin-card-guest-name">' + escapeHtml(g2.name || '') + '</span>' +
+              '<span class="admin-card-guest-menu">' + escapeHtml(menuTypeLabel(g2.menu_type)) + '</span>' +
+              (g2Has && g2Text ? '<span class="admin-card-guest-allergy">' + escapeHtml(g2Text) + '</span>' : '') +
+              '</div>';
+          }
+          guestBlock += '</div>';
+        }
         card.innerHTML =
           '<div class="admin-card-name">' + escapeHtml(r.name || '') + '</div>' +
           '<div class="admin-card-row"><span class="admin-card-label">Datum</span><span class="admin-card-value">' + escapeHtml(formatDate(r.created_at)) + '</span></div>' +
@@ -183,7 +244,8 @@
           (r.contact ? '<div class="admin-card-row"><span class="admin-card-label">Kontakt</span><span class="admin-card-value">' + escapeHtml(r.contact) + '</span></div>' : '') +
           (isYes ? '<div class="admin-card-row"><span class="admin-card-label">Gäste</span><span class="admin-card-value">' + (r.total_guests != null ? r.total_guests : dash) + '</span></div>' : '') +
           (isYes ? '<div class="admin-card-row"><span class="admin-card-label">Fleisch / Vegi / Kinder</span><span class="admin-card-value">' + (r.menu_meat != null ? r.menu_meat : dash) + ' / ' + (r.menu_vegi != null ? r.menu_vegi : dash) + ' / ' + (r.menu_kids != null ? r.menu_kids : dash) + '</span></div>' : '') +
-          (r.allergies_has && r.allergies_text ? '<div class="admin-card-row"><span class="admin-card-label">Allergien</span><span class="admin-card-value">' + escapeHtml(r.allergies_text) + '</span></div>' : '') +
+          (merged.has ? '<div class="admin-card-row"><span class="admin-card-label">Allergien</span><span class="admin-card-value">' + escapeHtml(merged.text) + '</span></div>' : '') +
+          guestBlock +
           '<div class="admin-card-actions">' + delBtn + '</div>';
         adminCards.appendChild(card);
       }

@@ -505,6 +505,80 @@
   border-top: 1px solid var(--border);
 }
 
+/* Mitgäste als Untergruppe in der Kartenansicht */
+.admin-card-guests {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-left: -0.25rem;
+  margin-right: -0.25rem;
+}
+
+.admin-card-guests-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.admin-card-guest-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.admin-card-guest-sub:last-child {
+  border-bottom: none;
+}
+
+.admin-card-guest-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.admin-card-guest-menu {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.admin-card-guest-allergy {
+  color: var(--text);
+  font-size: 0.85rem;
+  margin-left: auto;
+}
+
+/* Mitgäste als Unterzeilen in der Tabelle */
+.admin-tr-guest {
+  background: var(--bg);
+}
+
+.admin-tr-guest td {
+  border-top: none;
+  padding-top: 0.25rem;
+  padding-bottom: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.admin-td-guest-indent {
+  padding-left: 2rem !important;
+  color: var(--text-muted);
+}
+
+.admin-tr-guest .admin-tr-guest .admin-td-guest-indent {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 .admin-btn-delete {
   display: inline-flex;
   align-items: center;
