@@ -1,0 +1,1294 @@
+/* ========== Admin – Modern, Mobile-First ========== */
+
+.admin-app {
+  min-height: 100vh;
+  background: var(--bg);
+  padding: 0 0 2rem;
+}
+
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 1rem 1rem 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition);
+  min-height: 48px;
+}
+
+.admin-back:hover {
+  color: var(--gold);
+}
+
+.admin-wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.admin-wrap.tischplan-fullwidth {
+  max-width: none;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .admin-wrap.tischplan-fullwidth {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.admin-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-brand {
+  font-family: var(--font-script);
+  font-size: 2.25rem;
+  font-weight: 400;
+  margin: 0 0 0.15rem 0;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: goldShine 4s ease-in-out infinite;
+}
+
+.admin-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ========== Login ========== */
+.admin-login-section {
+  margin-bottom: 2rem;
+}
+
+.admin-login-section.hidden {
+  display: none !important;
+}
+
+.admin-login-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1.5rem 1.25rem;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+
+.admin-login-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.35rem 0;
+}
+
+.admin-login-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0 0 1.25rem 0;
+}
+
+.admin-login-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-token-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  transition: border-color var(--transition);
+}
+
+.admin-token-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(199, 154, 88, 0.15);
+}
+
+.btn-admin {
+  min-height: 48px;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.admin-status {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  min-height: 1.3em;
+}
+
+.admin-status.error {
+  color: var(--error);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (min-width: 480px) {
+  .admin-login-row {
+    flex-direction: row;
+    align-items: stretch;
+  }
+  .admin-token-input {
+    flex: 1;
+    min-width: 0;
+  }
+  .btn-admin {
+    width: auto;
+    min-width: 140px;
+  }
+}
+
+/* ========== Content ========== */
+.admin-content.hidden {
+  display: none !important;
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  padding: 0 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius);
+  border: 2px solid var(--gold);
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-light));
+  background-size: 200% 100%;
+  animation: goldShine 4s ease-in-out infinite;
+  color: #fff;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+
+.admin-download-btn:hover:not([aria-disabled="true"]) {
+  transform: translateY(-2px);
+}
+
+.admin-download-outline {
+  background: transparent;
+  color: var(--gold);
+  animation: none;
+}
+
+.admin-download-outline:hover:not([aria-disabled="true"]) {
+  background: rgba(199, 154, 88, 0.1);
+}
+
+.admin-download-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.admin-download-icon {
+  font-size: 1.1rem;
+}
+
+/* ========== Summary Stats ========== */
+.admin-summary {
+  margin-bottom: 1.5rem;
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.admin-stat {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.admin-stat:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.admin-stat-yes {
+  border-color: rgba(45, 90, 45, 0.3);
+  background: linear-gradient(180deg, rgba(200, 230, 200, 0.3), var(--card-bg));
+}
+
+.admin-stat-no {
+  border-color: rgba(139, 69, 19, 0.2);
+  background: linear-gradient(180deg, rgba(253, 240, 232, 0.5), var(--card-bg));
+}
+
+.admin-stat-value {
+  display: block;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.admin-stat-yes .admin-stat-value {
+  color: #2d5a2d;
+}
+
+.admin-stat-no .admin-stat-value {
+  color: var(--error);
+}
+
+.admin-stat-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+@media (min-width: 480px) {
+  .admin-summary-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-summary-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* ========== Filters ========== */
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.admin-filter-group {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.admin-filter-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.admin-select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 1rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  color: var(--text);
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235a5a5a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+}
+
+.admin-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+.admin-filter-check {
+  display: flex;
+  align-items: center;
+}
+
+.admin-check-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.admin-check {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.admin-filter-search {
+  flex: 1 1 100%;
+}
+
+.admin-search {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.65rem 1rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  transition: border-color var(--transition);
+}
+
+.admin-search:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+@media (min-width: 640px) {
+  .admin-filter-search {
+    flex: 1 1 220px;
+    max-width: 280px;
+  }
+}
+
+/* ========== Table (Desktop) ========== */
+.admin-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+  background: var(--card-bg);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-table th {
+  background: var(--bg);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.admin-table td:nth-child(10) {
+  white-space: normal;
+  max-width: 180px;
+  word-break: break-word;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(199, 154, 88, 0.04);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-th-action,
+.admin-td-action {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-td-action {
+  vertical-align: middle;
+}
+
+/* ========== Mobile: Card List (replace table) ========== */
+.admin-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-cards.hidden {
+  display: none !important;
+}
+
+.admin-card-item {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.admin-card-item.admin-card-yes {
+  border-left: 4px solid #2d5a2d;
+}
+
+.admin-card-item.admin-card-no {
+  border-left: 4px solid var(--error);
+}
+
+.admin-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.admin-card-row:last-child {
+  margin-bottom: 0;
+}
+
+.admin-card-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.admin-card-value {
+  font-size: 0.95rem;
+  color: var(--text);
+  text-align: right;
+  word-break: break-word;
+}
+
+.admin-card-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.admin-card-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.admin-btn-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  color: var(--error);
+  background: transparent;
+  border: 2px solid rgba(139, 69, 19, 0.4);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-btn-delete:hover:not(:disabled) {
+  background: rgba(139, 69, 19, 0.08);
+  border-color: var(--error);
+}
+
+.admin-btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-empty {
+  color: var(--text-muted);
+  font-size: 1rem;
+  text-align: center;
+  padding: 2rem 1rem;
+  margin: 0;
+}
+
+.admin-empty.hidden {
+  display: none !important;
+}
+
+/* Show table on desktop, cards on mobile */
+@media (max-width: 768px) {
+  .admin-table-wrap {
+    display: none !important;
+  }
+  #admin-cards:not(.hidden) {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  #admin-cards {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-stat-value {
+    font-size: 1.5rem;
+  }
+  .admin-toolbar {
+    flex-direction: column;
+  }
+  .admin-download-btn {
+    justify-content: center;
+  }
+}
+
+/* ========== Tabs ========== */
+.admin-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.admin-tab {
+  padding: 0.75rem 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-tab:hover {
+  color: var(--text);
+}
+
+.admin-tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.admin-panel {
+  outline: none;
+}
+
+.admin-panel.hidden {
+  display: none !important;
+}
+
+/* ========== Tischplan ========== */
+.tischplan-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.tischplan-status {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tischplan-status.success {
+  color: #2d5a2d;
+}
+
+.tischplan-status.error {
+  color: var(--error);
+}
+
+.tischplan-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  overflow-y: auto;
+  max-height: 78vh;
+  padding-right: 0.5rem;
+}
+
+.tischplan-add {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.tischplan-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+}
+
+.tischplan-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tischplan-input {
+  min-width: 0;
+}
+
+.tischplan-input-num {
+  width: 5rem;
+}
+
+.tischplan-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 0;
+  min-height: 0;
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .tischplan-layout {
+    grid-template-columns: 340px 1fr;
+    gap: 1.5rem;
+    min-height: 78vh;
+  }
+}
+
+@media (min-width: 1200px) {
+  .tischplan-layout {
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .tischplan-sidebar {
+    max-height: none;
+  }
+  .tischplan-floor {
+    min-height: 55vh;
+    height: 55vh;
+  }
+}
+
+.tischplan-tables-list {
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.tischplan-guests {
+  margin-top: 0;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.tischplan-guests-hint {
+  margin: 0 0 0.5rem 0;
+}
+
+.tischplan-tables-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tischplan-table-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.tischplan-table-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.tischplan-table-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tischplan-table-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.tischplan-table-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.tischplan-opt-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+}
+
+.tischplan-shape-select {
+  min-height: 36px;
+  padding: 0.35rem 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--card-bg);
+  margin-right: 0.75rem;
+}
+
+.tischplan-rotate-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.tischplan-rotate-input {
+  width: 4rem;
+  min-height: 36px;
+  padding: 0.35rem 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.tischplan-rotate-unit {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tischplan-table-guests {
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tischplan-table-guest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+.tischplan-table-guest-item .tischplan-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.tischplan-table-guest-label {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.tischplan-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.35rem;
+}
+
+.tischplan-chip-name {
+  word-break: break-word;
+}
+
+.tischplan-chip-person .tischplan-chip-name {
+  font-weight: 600;
+}
+
+.tischplan-chip-print-info {
+  display: none;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.tischplan-chip-badges {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+}
+
+.tischplan-chip .badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-meat { background: rgba(139, 90, 43, 0.2); color: #5c3a1a; }
+.badge-vegi { background: rgba(80, 120, 60, 0.25); color: #2d4a1e; }
+.badge-kids { background: rgba(199, 154, 88, 0.3); color: #5c4519; }
+.badge-allergy {
+  background: rgba(180, 80, 60, 0.2);
+  color: #8b3320;
+  cursor: pointer;
+  border: none;
+}
+.badge-allergy:hover { background: rgba(180, 80, 60, 0.35); }
+
+.tischplan-chip .chip-remove,
+.tischplan-chip .tischplan-guest-umsetzen,
+.tischplan-chip .tischplan-floor-unassign {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.tischplan-table-catering {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border);
+}
+
+.tischplan-table-catering-empty {
+  opacity: 0.6;
+}
+
+.tischplan-catering-global {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tischplan-catering-global-inner { }
+.tischplan-catering-global-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+}
+.tischplan-catering-global-row {
+  font-size: 0.9rem;
+  color: var(--text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+.tischplan-catering-global-row span { margin-right: 0.5rem; }
+.tischplan-catering-assigned { margin-top: 0.25rem; color: var(--text-muted); }
+.tischplan-catering-warn {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #8b4513;
+}
+
+.tischplan-highlight-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.tischplan-highlight-label {
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.tischplan-highlight-check { accent-color: var(--gold); }
+
+.tischplan-chip.highlight-vegi,
+.tischplan-chip.highlight-kind,
+.tischplan-chip.highlight-allergy {
+  box-shadow: 0 0 0 2px rgba(199, 154, 88, 0.6);
+  border-radius: 4px;
+  padding: 0.1rem 0.2rem;
+}
+.tischplan-floor-name-chip .tischplan-chip.highlight-vegi,
+.tischplan-floor-name-chip .tischplan-chip.highlight-kind,
+.tischplan-floor-name-chip .tischplan-chip.highlight-allergy {
+  box-shadow: 0 0 0 2px rgba(199, 154, 88, 0.7);
+}
+
+.tischplan-allergy-popover {
+  position: fixed;
+  z-index: 10000;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  padding: 0.75rem 1rem;
+  max-width: 280px;
+}
+.tischplan-allergy-popover.hidden { display: none !important; }
+.tischplan-allergy-popover-inner { }
+.tischplan-allergy-popover-text {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.tischplan-allergy-popover-close {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+  background: var(--border);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.tischplan-guest-umsetzen {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.tischplan-guest-umsetzen:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.tischplan-table-delete {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  color: var(--error);
+  background: none;
+  border: 1px solid rgba(139, 69, 19, 0.4);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tischplan-table-delete:hover {
+  background: rgba(139, 69, 19, 0.08);
+}
+
+.tischplan-floor-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tischplan-floor {
+  position: relative;
+  min-height: 75vh;
+  height: 75vh;
+  background: linear-gradient(180deg, #f8f6f2 0%, #eeece8 100%);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  touch-action: none;
+  flex: 1;
+}
+
+.tischplan-floor-inner {
+  position: absolute;
+  inset: 0;
+}
+
+.tischplan-floor-table {
+  position: absolute;
+  min-width: 120px;
+  min-height: 100px;
+  width: 140px;
+  padding: 0.6rem 0.75rem;
+  background: linear-gradient(135deg, rgba(199, 154, 88, 0.18), rgba(199, 154, 88, 0.08));
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: move;
+  user-select: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+.tischplan-floor-table-round {
+  border-radius: 50%;
+  width: 110px;
+  min-width: 110px;
+  height: 110px;
+  min-height: 110px;
+}
+
+.tischplan-floor-table:hover {
+  border-color: var(--gold-light);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.tischplan-floor-table-title {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.15rem;
+}
+
+.tischplan-floor-table-capacity {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.tischplan-floor-table-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.4rem;
+  justify-content: center;
+  align-content: flex-start;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text);
+  width: 100%;
+  max-height: 4.2em;
+  overflow-y: auto;
+  padding: 0.2rem 0;
+}
+
+.tischplan-floor-table-round .tischplan-floor-table-names {
+  max-height: 3.2em;
+  font-size: 0.65rem;
+  gap: 0.2rem 0.3rem;
+}
+
+.tischplan-floor-name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.35rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  border: 1px solid rgba(199, 154, 88, 0.3);
+  max-width: 100%;
+}
+
+.tischplan-floor-name-chip .tischplan-chip {
+  font-size: 0.7rem;
+  gap: 0.15rem 0.25rem;
+}
+.tischplan-floor-name-chip .tischplan-chip-name {
+  max-width: 8em;
+  word-break: break-word;
+}
+.tischplan-floor-name-chip .badge { font-size: 0.6rem; padding: 0.08rem 0.25rem; }
+
+.tischplan-floor-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 4.5em;
+}
+
+.tischplan-floor-unassign {
+  flex-shrink: 0;
+  width: 1.1em;
+  height: 1.1em;
+  padding: 0;
+  line-height: 1;
+  font-size: 1em;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.tischplan-floor-unassign:hover {
+  color: var(--error);
+  background: rgba(139, 69, 19, 0.1);
+}
+
+.tischplan-all-done {
+  font-size: 0.9rem;
+  color: #2d5a2d;
+  margin: 0;
+  padding: 0.75rem;
+  background: rgba(200, 230, 200, 0.3);
+  border-radius: var(--radius);
+  border: 1px solid rgba(45, 90, 45, 0.3);
+}
+
+.tischplan-guests-hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tischplan-guests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tischplan-guest-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.tischplan-guest-row-chip {
+  flex: 1 1 180px;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tischplan-guest-row-chip .tischplan-chip {
+  flex-wrap: wrap;
+}
+
+.tischplan-guest-name {
+  flex: 1 1 180px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.tischplan-guest-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tischplan-guest-select {
+  min-width: 140px;
+  min-height: 40px;
+  padding: 0.4rem 0.6rem;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.tischplan-guest-select:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+
+/* ========== Print Catering ========== */
+@media print {
+  body.print-catering .admin-login-section,
+  body.print-catering .admin-back,
+  body.print-catering .admin-header,
+  body.print-catering .admin-tabs,
+  body.print-catering .tischplan-toolbar,
+  body.print-catering .tischplan-add,
+  body.print-catering .tischplan-highlight-toggles,
+  body.print-catering .tischplan-guests-list,
+  body.print-catering .tischplan-floor-wrap,
+  body.print-catering .tischplan-table-options,
+  body.print-catering .tischplan-table-delete,
+  body.print-catering .chip-remove,
+  body.print-catering .tischplan-guest-umsetzen,
+  body.print-catering .tischplan-floor-unassign {
+    display: none !important;
+  }
+  body.print-catering,
+  body.print-catering .admin-wrap {
+    background: #fff !important;
+    max-width: none !important;
+  }
+  body.print-catering #panel-tischplan {
+    display: block !important;
+  }
+  body.print-catering .tischplan-catering-global {
+    background: #fff !important;
+    border: 1px solid #333 !important;
+    margin-bottom: 1rem;
+    color: #000 !important;
+  }
+  body.print-catering .tischplan-catering-global-row,
+  body.print-catering .tischplan-catering-global-title {
+    color: #000 !important;
+  }
+  body.print-catering .tischplan-layout {
+    display: block !important;
+  }
+  body.print-catering .tischplan-sidebar {
+    max-width: none !important;
+    border: none !important;
+  }
+  body.print-catering .tischplan-table-card {
+    break-inside: avoid;
+    border: 1px solid #333 !important;
+    background: #fff !important;
+    color: #000 !important;
+    margin-bottom: 0.75rem;
+  }
+  body.print-catering .tischplan-table-card-header,
+  body.print-catering .tischplan-table-meta,
+  body.print-catering .tischplan-table-catering,
+  body.print-catering .tischplan-table-guests {
+    color: #000 !important;
+  }
+  body.print-catering .tischplan-chip-print-info {
+    display: inline !important;
+    color: #000 !important;
+    font-size: 0.85em;
+  }
+  body.print-catering .badge {
+    background: #eee !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+  }
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anmeldung Hochzeit Cristina &amp; Raffaele</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Programmiert und designed von Nils Fischer im Auftrag der Firma carton ideen GmbH -->
+</head>
+<body>
+  <!-- Diese Seite wurde von Nils Fischer im Auftrag der Firma carton ideen GmbH programmiert und designed. -->
+  <header class="hero">
+    <img src="assets/hero.png" alt="" class="hero-bg" width="1920" height="1080" loading="eager">
+    <div class="corner corner-tl" aria-hidden="true"></div>
+    <div class="corner corner-br" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="hero-overline">Für immer beginnt heute</p>
+      <h1 class="hero-title">Cristina &amp; Raffaele</h1>
+      <p class="hero-tagline">Wir freuen uns, unseren besonderen Tag mit dir zu teilen.</p>
+      <div class="hero-buttons">
+        <a href="#rsvp" class="hero-btn hero-btn-primary">Jetzt zur Hochzeit anmelden</a>
+        <button type="button" class="hero-btn hero-btn-secondary" id="hero-btn-decline">Absagen</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="modal-overlay" id="decline-modal" role="dialog" aria-modal="true" aria-labelledby="decline-modal-title" aria-hidden="true">
+    <div class="modal-box">
+      <div class="modal-step" id="decline-step-confirm">
+        <h3 class="modal-title" id="decline-modal-title">Oh wie schade, dass du nicht kommen kannst. Bist du sicher?</h3>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn modal-btn-confirm" id="decline-modal-yes">Ja</button>
+          <button type="button" class="modal-btn modal-btn-cancel" id="decline-modal-no">Nein</button>
+        </div>
+      </div>
+      <div class="modal-step hidden" id="decline-step-form">
+        <h3 class="modal-title">Dein Name</h3>
+        <p class="modal-desc">Damit wir Bescheid wissen – nur noch den Namen eintragen.</p>
+        <form id="decline-form" class="modal-form">
+          <label for="decline-name" class="modal-label">Name</label>
+          <input type="text" id="decline-name" class="modal-input" name="name" required autocomplete="name" placeholder="z. B. Max Mustermann">
+          <span class="field-error" id="error-decline-name" aria-live="polite"></span>
+          <div class="modal-actions modal-actions-submit">
+            <button type="button" class="modal-btn modal-btn-cancel" id="decline-form-cancel">Abbrechen</button>
+            <button type="submit" class="modal-btn modal-btn-confirm" id="decline-form-submit">Absage senden</button>
+          </div>
+        </form>
+        <p class="modal-status" id="decline-form-status" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="source-credit-overlay" role="dialog" aria-modal="true" aria-labelledby="source-credit-title" aria-hidden="true">
+    <div class="modal-box source-credit-box">
+      <h3 class="modal-title" id="source-credit-title">Über diese Seite</h3>
+      <p class="source-credit-text">
+        Diese Seite wurde von <strong>Nils Fischer</strong> entwickelt und gestaltet im Auftrag von <strong>Carton Ideen GmbH</strong>.
+        Sie können sich gerne melden, wenn Sie auch so eine Seite möchten.
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-confirm" id="source-credit-close">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="main">
+    <section class="countdown-section" aria-label="Countdown zur Hochzeit">
+      <p class="countdown-overline">Bis zum großen Tag</p>
+      <h2 class="countdown-heading">Feiert mit uns</h2>
+      <p class="countdown-intro">Am 6. Juni 2026 sagen Cristina &amp; Raffaele Ja. Die Zeit bis dahin:</p>
+      <div class="countdown" role="timer" aria-live="polite">
+        <div class="countdown-box">
+          <span class="countdown-value" id="countdown-days">0</span>
+          <span class="countdown-label">Tage</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value" id="countdown-hours">0</span>
+          <span class="countdown-label">Stunden</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value" id="countdown-minutes">0</span>
+          <span class="countdown-label">Minuten</span>
+        </div>
+        <div class="countdown-box">
+          <span class="countdown-value" id="countdown-seconds">0</span>
+          <span class="countdown-label">Sekunden</span>
+        </div>
+      </div>
+      <a href="#rsvp" class="countdown-cta">Zur Rückmeldung</a>
+    </section>
+
+    <section class="welcome-section">
+      <div class="welcome-inner">
+        <h2 class="welcome-title">Willkommen</h2>
+        <p class="welcome-text">Ihr seid herzlich eingeladen, mit uns zu feiern. Bitte nimm dir einen Moment und gib uns über das Formular unten Bescheid, ob du dabei bist – wir freuen uns auf dich.</p>
+      </div>
+    </section>
+
+    <section class="rsvp-section" id="rsvp">
+      <div class="rsvp-inner">
+        <h2 class="rsvp-heading">Rückmeldung</h2>
+        <p class="rsvp-subheading">Wir feiern gemeinsam – gib uns bitte Bescheid.</p>
+
+        <div class="card card-form">
+          <div class="frame">
+            <svg class="frame-svg" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <style>
+                  .frame-line { fill: none; stroke: #c79a58; stroke-width: 1.5; }
+                </style>
+              </defs>
+              <polygon class="frame-line" points="0,0 400,0 400,500 0,500 0,0" />
+            </svg>
+          </div>
+
+          <div class="card-inner">
+            <form id="rsvp-form" class="form" novalidate>
+              <div id="form-status" class="form-status" role="status" aria-live="polite" aria-atomic="true"></div>
+
+              <div class="form-group">
+                <label for="name" class="form-label">Name <span class="required">*</span></label>
+                <input type="text" id="name" name="name" class="form-input" required autocomplete="name" maxlength="200" placeholder="z. B. Anna Müller">
+                <span class="field-error" id="error-name" role="alert"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="contact" class="form-label">Kontakt <span class="form-label-optional">(optional)</span></label>
+                <input type="text" id="contact" name="contact" class="form-input" autocomplete="email tel" maxlength="200" placeholder="E-Mail oder Telefon">
+              </div>
+
+              <fieldset class="form-group form-choice-group">
+                <legend class="form-legend">Kommst du zur Feier? <span class="required">*</span></legend>
+                <div class="choice-cards">
+                  <label class="choice-card" for="attending-yes">
+                    <input type="radio" name="attending" value="yes" id="attending-yes" required>
+                    <span class="choice-card-inner">
+                      <span class="choice-icon" aria-hidden="true">✓</span>
+                      <span class="choice-text">Ja, wir kommen</span>
+                    </span>
+                  </label>
+                  <label class="choice-card" for="attending-no">
+                    <input type="radio" name="attending" value="no" id="attending-no">
+                    <span class="choice-card-inner">
+                      <span class="choice-icon choice-icon-no" aria-hidden="true">✕</span>
+                      <span class="choice-text">Leider nein</span>
+                    </span>
+                  </label>
+                </div>
+                <span class="field-error" id="error-attending" role="alert"></span>
+              </fieldset>
+
+              <div id="guests-section" class="guests-section hidden">
+                <div class="form-group">
+                  <label for="total_guests" class="form-label">Anzahl Gäste <span class="required">*</span></label>
+                  <input type="number" id="total_guests" name="total_guests" class="form-input form-input-number" min="1" max="20" placeholder="z. B. 2" inputmode="numeric">
+                  <span class="field-error" id="error-total_guests" role="alert"></span>
+                </div>
+                <p class="guest-details-hint">Pro Gast: Menü wählen und ggf. Allergien angeben. So können wir beim Tischplan genau sehen, wer was isst.</p>
+                <div id="guest-details-container" class="guest-details-container"></div>
+                <span class="field-error" id="error-guest_details" role="alert"></span>
+              </div>
+
+              <p class="form-privacy">
+                <span class="form-privacy-icon" aria-hidden="true">🔒</span>
+                Deine Angaben werden nur für die Hochzeitsplanung genutzt, danach gelöscht und nicht weitergegeben.
+              </p>
+
+              <button type="submit" class="btn btn-submit">Rückmeldung absenden</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a href="admin.html" class="login-link">Login (Admin)</a>
+    <p class="site-footer-credit">Entwickelt von <span class="site-footer-company">carton ideen GmbH</span></p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

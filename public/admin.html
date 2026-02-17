@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Admin – Cristina &amp; Raffaele</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="admin-app">
+    <a href="index.html" class="admin-back">← Zurück zur Einladung</a>
+
+    <div class="admin-wrap">
+      <header class="admin-header">
+        <h1 class="admin-brand">Cristina &amp; Raffaele</h1>
+        <p class="admin-subtitle">Rückmeldungen verwalten</p>
+      </header>
+
+      <section class="admin-login-section" id="admin-login-section">
+        <div class="admin-login-card">
+          <h2 class="admin-login-title">Anmelden</h2>
+          <p class="admin-login-desc">Passwort eingeben, um die Rückmeldungen zu sehen.</p>
+          <label for="admin-password" class="sr-only">Passwort</label>
+          <div class="admin-login-row">
+            <input type="password" id="admin-password" class="admin-token-input" placeholder="Passwort" autocomplete="current-password" aria-label="Passwort">
+            <button type="button" id="admin-login-btn" class="btn btn-admin">Anmelden</button>
+          </div>
+          <p id="admin-token-status" class="admin-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <div id="admin-content" class="admin-content hidden" aria-hidden="true">
+        <nav class="admin-tabs" role="tablist" aria-label="Bereiche">
+          <button type="button" class="admin-tab active" role="tab" id="tab-rsvp" aria-selected="true" aria-controls="panel-rsvp">Rückmeldungen</button>
+          <button type="button" class="admin-tab" role="tab" id="tab-tischplan" aria-selected="false" aria-controls="panel-tischplan">Tischplan</button>
+        </nav>
+
+        <div id="panel-rsvp" class="admin-panel" role="tabpanel" aria-labelledby="tab-rsvp">
+        <div class="admin-toolbar">
+          <a id="xlsx-download" href="#" class="admin-download-btn" download="Rueckmeldungen.xlsx" aria-disabled="true">
+            <span class="admin-download-icon">📥</span>
+            <span>Excel</span>
+          </a>
+          <a id="pdf-download" href="#" class="admin-download-btn admin-download-outline" download="Rueckmeldungen.pdf" aria-disabled="true">
+            <span class="admin-download-icon">📄</span>
+            <span>PDF</span>
+          </a>
+        </div>
+
+        <section class="admin-summary" id="admin-summary" aria-label="Übersicht">
+          <div class="admin-summary-grid">
+            <div class="admin-stat admin-stat-yes">
+              <span class="admin-stat-value" id="sum-yes">0</span>
+              <span class="admin-stat-label">Zusagen</span>
+            </div>
+            <div class="admin-stat admin-stat-no">
+              <span class="admin-stat-value" id="sum-no">0</span>
+              <span class="admin-stat-label">Absagen</span>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-stat-value" id="sum-guests">0</span>
+              <span class="admin-stat-label">Gäste</span>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-stat-value" id="sum-meat">0</span>
+              <span class="admin-stat-label">Fleisch</span>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-stat-value" id="sum-vegi">0</span>
+              <span class="admin-stat-label">Vegi</span>
+            </div>
+            <div class="admin-stat">
+              <span class="admin-stat-value" id="sum-kids">0</span>
+              <span class="admin-stat-label">Kinder</span>
+            </div>
+          </div>
+        </section>
+
+        <div class="admin-filters">
+          <div class="admin-filter-group">
+            <label for="filter-status" class="admin-filter-label">Status</label>
+            <select id="filter-status" class="admin-select" aria-label="Nach Status filtern">
+              <option value="all">Alle</option>
+              <option value="yes">Nur Zusagen</option>
+              <option value="no">Nur Absagen</option>
+            </select>
+          </div>
+          <div class="admin-filter-group admin-filter-check">
+            <label class="admin-check-wrap">
+              <input type="checkbox" id="filter-allergies" value="1" class="admin-check">
+              <span>Nur mit Allergien</span>
+            </label>
+          </div>
+          <div class="admin-filter-group admin-filter-search">
+            <label for="filter-search" class="admin-filter-label">Suchen</label>
+            <input type="search" id="filter-search" class="admin-search" placeholder="Name oder Kontakt…" aria-label="Rückmeldungen durchsuchen">
+          </div>
+        </div>
+
+        <div class="admin-table-wrap" id="table-wrap">
+          <table class="admin-table" id="admin-table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Name</th>
+                <th>Kontakt</th>
+                <th>Status</th>
+                <th>Gäste</th>
+                <th>Fleisch</th>
+                <th>Vegi</th>
+                <th>Kinder</th>
+                <th>Allergien</th>
+                <th>Allergietext</th>
+                <th class="admin-th-action">Aktion</th>
+              </tr>
+            </thead>
+            <tbody id="admin-tbody">
+            </tbody>
+          </table>
+        </div>
+
+        <div id="admin-cards" class="admin-cards hidden" aria-hidden="true"></div>
+
+        <p id="admin-table-empty" class="admin-empty hidden">Noch keine Rückmeldungen.</p>
+        </div>
+
+        <div id="panel-tischplan" class="admin-panel hidden" role="tabpanel" aria-labelledby="tab-tischplan">
+          <div class="tischplan-toolbar">
+            <button type="button" id="tischplan-save" class="btn admin-download-btn">Tischplan speichern</button>
+            <button type="button" id="tischplan-print-catering" class="btn admin-download-outline">Catering drucken</button>
+            <span id="tischplan-save-status" class="tischplan-status" aria-live="polite"></span>
+          </div>
+          <div id="tischplan-catering-global" class="tischplan-catering-global" aria-label="Catering Gesamt"></div>
+          <div class="tischplan-layout">
+            <aside class="tischplan-sidebar">
+              <div class="tischplan-add">
+                <h3 class="tischplan-heading">Tisch hinzufügen</h3>
+                <div class="tischplan-add-row">
+                  <input type="text" id="tischplan-table-name" class="admin-search tischplan-input" placeholder="z. B. Tisch 1" maxlength="50">
+                  <label for="tischplan-table-capacity" class="sr-only">Plätze</label>
+                  <input type="number" id="tischplan-table-capacity" class="admin-search tischplan-input tischplan-input-num" placeholder="Plätze" min="1" max="99" value="8" aria-label="Anzahl Plätze">
+                  <button type="button" id="tischplan-add-btn" class="btn admin-download-outline">Hinzufügen</button>
+                </div>
+              </div>
+              <div class="tischplan-tables-list" id="tischplan-tables-list">
+                <h3 class="tischplan-heading">Tische</h3>
+                <div id="tischplan-tables-container"></div>
+              </div>
+              <div class="tischplan-guests">
+                <h3 class="tischplan-heading">Gäste zuweisen</h3>
+                <p class="tischplan-guests-hint">Pro Gruppe einen Tisch wählen.</p>
+                <div class="tischplan-highlight-toggles">
+                  <label class="tischplan-highlight-label"><input type="checkbox" id="tischplan-highlight-vegi" class="tischplan-highlight-check"> Highlight VEGI</label>
+                  <label class="tischplan-highlight-label"><input type="checkbox" id="tischplan-highlight-kind" class="tischplan-highlight-check"> Highlight KIND</label>
+                  <label class="tischplan-highlight-label"><input type="checkbox" id="tischplan-highlight-allergy" class="tischplan-highlight-check"> Highlight ALLERGIE</label>
+                </div>
+                <div id="tischplan-guests-list" class="tischplan-guests-list"></div>
+              </div>
+            </aside>
+            <div class="tischplan-floor-wrap">
+              <h3 class="tischplan-heading">Raumansicht – Tische verschieben</h3>
+              <div class="tischplan-floor" id="tischplan-floor">
+                <div id="tischplan-floor-inner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="tischplan-allergy-popover" class="tischplan-allergy-popover hidden" role="dialog" aria-label="Allergiehinweis">
+    <div class="tischplan-allergy-popover-inner">
+      <p class="tischplan-allergy-popover-text"></p>
+      <button type="button" class="tischplan-allergy-popover-close" aria-label="Schließen">Schließen</button>
+    </div>
+  </div>
+  <script src="admin.js"></script>
+</body>
+</html>
