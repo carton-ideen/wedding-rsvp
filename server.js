@@ -317,6 +317,36 @@ function formatDatePdf(createdAt) {
   return String(createdAt);
 }
 
+/** Allergien aus Hauptgast + Mitgästen (guest_details) zusammenführen für PDF/Excel. */
+function getMergedAllergies(r) {
+  const parts = [];
+  const mainHas = !!(r.allergies_has === 1 || r.allergies_has === true);
+  const mainText = (r.allergies_text != null && String(r.allergies_text).trim()) ? String(r.allergies_text).trim() : '';
+  if (mainHas && mainText) {
+    parts.push((r.name || 'Hauptgast') + ': ' + mainText);
+  }
+  let guestDetails = [];
+  if (r.guest_details != null && String(r.guest_details).trim() !== '') {
+    try {
+      guestDetails = JSON.parse(r.guest_details);
+    } catch (e) {
+      guestDetails = [];
+    }
+  }
+  if (Array.isArray(guestDetails)) {
+    for (let j = 0; j < guestDetails.length; j++) {
+      const g = guestDetails[j];
+      const gHas = !!(g.allergies_has === 1 || g.allergies_has === true);
+      const gText = (g.allergies_text != null && String(g.allergies_text).trim()) ? String(g.allergies_text).trim() : '';
+      if (gHas && gText) {
+        parts.push((g.name || 'Gast') + ': ' + gText);
+      }
+    }
+  }
+  const text = parts.join('; ');
+  return { has: parts.length > 0, text };
+}
+
 app.get('/api/admin/rsvps.pdf', (req, res) => {
   if (!requireAdminToken(req, res)) return;
   const rows = db.prepare('SELECT * FROM rsvps ORDER BY created_at DESC').all();
@@ -399,6 +429,7 @@ app.get('/api/admin/rsvps.pdf', (req, res) => {
     }
     const isYes = r.attending === 'yes';
     const dash = '–';
+    const merged = getMergedAllergies(r);
     const cells = [
       formatDatePdf(r.created_at),
       (r.name || '').substring(0, 14),
@@ -408,8 +439,8 @@ app.get('/api/admin/rsvps.pdf', (req, res) => {
       isYes ? String(r.menu_meat != null ? r.menu_meat : dash) : dash,
       isYes ? String(r.menu_vegi != null ? r.menu_vegi : dash) : dash,
       isYes ? String(r.menu_kids != null ? r.menu_kids : dash) : dash,
-      r.allergies_has ? 'ja' : 'nein',
-      (r.allergies_text || '').substring(0, 22)
+      merged.has ? 'ja' : 'nein',
+      merged.text.substring(0, 22)
     ];
     const rowY = doc.y;
     x = 50;
@@ -533,6 +564,7 @@ app.get('/api/admin/rsvps.xlsx', async (req, res) => {
   }
 
   rows.forEach((r, i) => {
+    const merged = getMergedAllergies(r);
     const row = sheet.getRow(13 + i);
     row.values = [
       formatDateExcel(r.created_at),
@@ -543,8 +575,8 @@ app.get('/api/admin/rsvps.xlsx', async (req, res) => {
       r.menu_meat != null ? r.menu_meat : '',
       r.menu_vegi != null ? r.menu_vegi : '',
       r.menu_kids != null ? r.menu_kids : '',
-      r.allergies_has ? 'ja' : 'nein',
-      r.allergies_text || ''
+      merged.has ? 'ja' : 'nein',
+      merged.text || ''
     ];
     row.alignment = { vertical: 'middle', wrapText: true };
   });
