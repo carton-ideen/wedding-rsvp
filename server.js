@@ -1,6 +1,7 @@
+require('dotenv').config();
 const express = require('express');
-const Database = require('better-sqlite3');
 const path = require('path');
+const mysql = require('mysql2/promise');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const helmet = require('helmet');
@@ -9,45 +10,61 @@ const rateLimit = (require('express-rate-limit').rateLimit || require('express-r
 const app = express();
 const PORT = process.env.PORT || 3000;
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'change-me';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'cristina&raffaele';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS || 'cristina&raffaele';
 
-const db = new Database(path.join(__dirname, 'rsvp.sqlite'));
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT, 10) || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS rsvps (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    contact TEXT,
-    attending TEXT NOT NULL CHECK(attending IN ('yes','no')),
-    total_guests INTEGER,
-    menu_meat INTEGER,
-    menu_vegi INTEGER,
-    menu_kids INTEGER,
-    allergies_has INTEGER NOT NULL DEFAULT 0,
-    allergies_text TEXT,
-    guest_names TEXT,
-    guest_details TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  )
-`);
-try {
-  db.prepare('ALTER TABLE rsvps ADD COLUMN guest_names TEXT').run();
-} catch (e) {
-  if (!/duplicate column name/i.test(e.message)) throw e;
+async function initDb() {
+  const conn = await pool.getConnection();
+  try {
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS rsvps (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        name VARCHAR(255) NOT NULL,
+        contact VARCHAR(255) NULL,
+        attending VARCHAR(20) NOT NULL,
+        total_guests INT NULL,
+        menu_meat INT NULL,
+        menu_vegi INT NULL,
+        menu_kids INT NULL,
+        allergies_has TINYINT NULL,
+        allergies_text TEXT NULL,
+        guest_names TEXT NULL,
+        guest_details TEXT NULL
+      )
+    `);
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS tischplan (
+        id INT PRIMARY KEY,
+        data TEXT NOT NULL
+      )
+    `);
+    const [rows] = await conn.query('SELECT 1 FROM tischplan WHERE id = 1');
+    if (rows.length === 0) {
+      await conn.query("INSERT INTO tischplan (id, data) VALUES (1, '{\"tables\":[],\"assignments\":{}}')");
+    }
+  } finally {
+    conn.release();
+  }
 }
-try {
-  db.prepare('ALTER TABLE rsvps ADD COLUMN guest_details TEXT').run();
-} catch (e) {
-  if (!/duplicate column name/i.test(e.message)) throw e;
+
+function query(sql, params = []) {
+  return pool.execute(sql, params);
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tischplan (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    data TEXT NOT NULL DEFAULT '{"tables":[],"assignments":{}}'
-  )
-`);
-db.prepare('INSERT OR IGNORE INTO tischplan (id, data) VALUES (1, ?)').run('{"tables":[],"assignments":{}}');
+app.get('/health', (req, res) => {
+  res.status(200).json({ ok: true });
+});
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '50kb' }));
@@ -146,7 +163,7 @@ function validateRsvp(body) {
   return { errors, name, contact, attending, body, allergiesHas, allergiesText };
 }
 
-app.post('/api/rsvp', (req, res) => {
+app.post('/api/rsvp', async (req, res) => {
   const { errors, name, contact, attending, body, allergiesHas, allergiesText } = validateRsvp(req.body);
   if (errors.length > 0) {
     return res.status(400).json({ ok: false, error: errors.join(' ') });
@@ -195,11 +212,11 @@ app.post('/api/rsvp', (req, res) => {
   }
 
   try {
-    const stmt = db.prepare(`
-      INSERT INTO rsvps (name, contact, attending, total_guests, menu_meat, menu_vegi, menu_kids, allergies_has, allergies_text, guest_names, guest_details)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(saveName, contact || null, attending, total_guests, menu_meat, menu_vegi, menu_kids, allergiesHas ? 1 : 0, allergiesHas ? allergiesText : null, guest_names_json, guest_details_json);
+    await query(
+      `INSERT INTO rsvps (name, contact, attending, total_guests, menu_meat, menu_vegi, menu_kids, allergies_has, allergies_text, guest_names, guest_details)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [saveName, contact || null, attending, total_guests, menu_meat, menu_vegi, menu_kids, allergiesHas ? 1 : 0, allergiesHas ? allergiesText : null, guest_names_json, guest_details_json]
+    );
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'Speichern fehlgeschlagen. Bitte später erneut versuchen.' });
@@ -223,39 +240,44 @@ app.post('/api/admin/login', (req, res) => {
   res.json({ ok: true, token: ADMIN_TOKEN });
 });
 
-app.get('/api/admin/rsvps', (req, res) => {
-  if (!requireAdminToken(req, res)) return;
-  const rows = db.prepare('SELECT * FROM rsvps ORDER BY created_at DESC').all();
-  const rsvps = rows.map((r) => {
-    const out = { ...r };
-    if (out.guest_names != null && out.guest_names !== '') {
-      try {
-        out.guest_names = JSON.parse(out.guest_names);
-      } catch (e) {
-        out.guest_names = null;
-      }
-    } else {
-      out.guest_names = null;
-    }
-    if (out.guest_details != null && out.guest_details !== '') {
-      try {
-        out.guest_details = JSON.parse(out.guest_details);
-      } catch (e) {
-        out.guest_details = null;
-      }
-    } else {
-      out.guest_details = null;
-    }
-    return out;
-  });
-  res.json({ ok: true, rsvps });
-});
-
-app.get('/api/admin/tischplan', (req, res) => {
+app.get('/api/admin/rsvps', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
   try {
-    const row = db.prepare('SELECT data FROM tischplan WHERE id = 1').get();
-    const data = row && row.data ? JSON.parse(row.data) : { tables: [], assignments: {} };
+    const [rows] = await query('SELECT * FROM rsvps ORDER BY id DESC');
+    const rsvps = rows.map((r) => {
+      const out = { ...r };
+      if (out.guest_names != null && out.guest_names !== '') {
+        try {
+          out.guest_names = JSON.parse(out.guest_names);
+        } catch (e) {
+          out.guest_names = null;
+        }
+      } else {
+        out.guest_names = null;
+      }
+      if (out.guest_details != null && out.guest_details !== '') {
+        try {
+          out.guest_details = JSON.parse(out.guest_details);
+        } catch (e) {
+          out.guest_details = null;
+        }
+      } else {
+        out.guest_details = null;
+      }
+      return out;
+    });
+    res.json({ ok: true, rsvps });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'Rückmeldungen konnten nicht geladen werden.' });
+  }
+});
+
+app.get('/api/admin/tischplan', async (req, res) => {
+  if (!requireAdminToken(req, res)) return;
+  try {
+    const [rows] = await query('SELECT data FROM tischplan WHERE id = 1');
+    const row = rows[0];
+    let data = row && row.data != null ? (typeof row.data === 'object' ? row.data : JSON.parse(row.data)) : { tables: [], assignments: {} };
     if (!Array.isArray(data.tables)) data.tables = [];
     if (typeof data.assignments !== 'object' || data.assignments === null) data.assignments = {};
     res.json({ ok: true, plan: data });
@@ -264,7 +286,7 @@ app.get('/api/admin/tischplan', (req, res) => {
   }
 });
 
-app.put('/api/admin/tischplan', (req, res) => {
+app.put('/api/admin/tischplan', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
   const body = req.body || {};
   let tables = Array.isArray(body.tables) ? body.tables : [];
@@ -286,22 +308,22 @@ app.put('/api/admin/tischplan', (req, res) => {
   }
   try {
     const data = JSON.stringify({ tables, assignments: assignmentsClean });
-    db.prepare('UPDATE tischplan SET data = ? WHERE id = 1').run(data);
+    await query('UPDATE tischplan SET data = ? WHERE id = 1', [data]);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ ok: false, error: 'Tischplan konnte nicht gespeichert werden.' });
   }
 });
 
-app.delete('/api/admin/rsvps/:id', (req, res) => {
+app.delete('/api/admin/rsvps/:id', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
   const id = parseInt(req.params.id, 10);
   if (Number.isNaN(id) || id < 1) {
     return res.status(400).json({ ok: false, error: 'Ungültige ID.' });
   }
   try {
-    const result = db.prepare('DELETE FROM rsvps WHERE id = ?').run(id);
-    if (result.changes === 0) {
+    const [result] = await query('DELETE FROM rsvps WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
       return res.status(404).json({ ok: false, error: 'Eintrag nicht gefunden.' });
     }
     res.json({ ok: true });
@@ -317,7 +339,6 @@ function formatDatePdf(createdAt) {
   return String(createdAt);
 }
 
-/** Allergien aus Hauptgast + Mitgästen (guest_details) zusammenführen für PDF/Excel. */
 function getMergedAllergies(r) {
   const parts = [];
   const mainHas = !!(r.allergies_has === 1 || r.allergies_has === true);
@@ -347,111 +368,115 @@ function getMergedAllergies(r) {
   return { has: parts.length > 0, text };
 }
 
-app.get('/api/admin/rsvps.pdf', (req, res) => {
+app.get('/api/admin/rsvps.pdf', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
-  const rows = db.prepare('SELECT * FROM rsvps ORDER BY created_at DESC').all();
-  let sumYes = 0, sumNo = 0, sumGuests = 0, sumMeat = 0, sumVegi = 0, sumKids = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    if (r.attending === 'yes') {
-      sumYes++;
-      sumGuests += r.total_guests || 0;
-      sumMeat += r.menu_meat || 0;
-      sumVegi += r.menu_vegi || 0;
-      sumKids += r.menu_kids || 0;
-    } else sumNo++;
-  }
-
-  const doc = new PDFDocument({ margin: 50, size: 'A4' });
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename="Rueckmeldungen_Cristina_Raffaele.pdf"');
-  doc.pipe(res);
-
-  const gold = '#c79a58';
-  const gray = '#5a5a5a';
-  const lightBg = '#f7f5f1';
-
-  doc.fontSize(22).fillColor(gold).text('Rückmeldungen', { align: 'center' });
-  doc.moveDown(0.3);
-  doc.fontSize(18).text('Cristina & Raffaele', { align: 'center' });
-  doc.moveDown(0.5);
-  doc.fontSize(11).fillColor(gray).text('Auswertung der Anmeldungen', { align: 'center' });
-  doc.moveDown(1.2);
-
-  const summaryY = doc.y;
-  doc.fontSize(12).fillColor('black').font('Helvetica-Bold').text('Zusammenfassung', 50, summaryY);
-  doc.moveDown(0.6);
-  const boxY = doc.y;
-  const boxH = 36;
-  const col1 = 50, col2 = 180, col3 = 310;
-  const labels = ['Zusagen', 'Absagen', 'Gesamtgäste', 'Menü Fleisch', 'Menü Vegetarisch', 'Menü Kinder'];
-  const values = [sumYes, sumNo, sumGuests, sumMeat, sumVegi, sumKids];
-  for (let i = 0; i < 6; i++) {
-    const x = i % 3 === 0 ? col1 : i % 3 === 1 ? col2 : col3;
-    const y = boxY + Math.floor(i / 3) * (boxH + 8);
-    doc.roundedRect(x, y, 120, boxH, 4).fillAndStroke(lightBg, gold);
-    doc.fontSize(9).fillColor(gray).font('Helvetica').text(labels[i], x + 10, y + 8, { width: 100 });
-    doc.fontSize(14).fillColor(gold).font('Helvetica-Bold').text(String(values[i]), x + 10, y + 22, { width: 100 });
-  }
-  doc.y = boxY + 2 * (boxH + 8) + 20;
-
-  doc.fontSize(12).fillColor('black').font('Helvetica-Bold').text('Details', 50, doc.y);
-  doc.moveDown(0.5);
-
-  const tableTop = doc.y;
-  const colW = [42, 52, 58, 28, 28, 28, 28, 28, 28, 70];
-  const headers = ['Datum', 'Name', 'Kontakt', 'Status', 'Gäste', 'Fleisch', 'Vegi', 'Kinder', 'Allerg.', 'Allergietext'];
-  const rowH = 22;
-  doc.rect(50, tableTop, colW.reduce((a, b) => a + b, 0), rowH).fill(gold);
-  let x = 50;
-  doc.fontSize(8).fillColor('white').font('Helvetica-Bold');
-  for (let c = 0; c < headers.length; c++) {
-    doc.text(headers[c], x + 4, tableTop + 6, { width: colW[c] - 6, ellipsis: true });
-    x += colW[c];
-  }
-  doc.y = tableTop + rowH;
-
-  doc.font('Helvetica').fillColor('black').fontSize(8);
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    if (doc.y > 700) {
-      doc.addPage();
-      doc.y = 50;
-      doc.rect(50, doc.y, colW.reduce((a, b) => a + b, 0), rowH).fill(gold);
-      x = 50;
-      doc.fillColor('white').font('Helvetica-Bold');
-      for (let c = 0; c < headers.length; c++) {
-        doc.text(headers[c], x + 4, doc.y + 6, { width: colW[c] - 6, ellipsis: true });
-        x += colW[c];
-      }
-      doc.y += rowH;
-      doc.fillColor('black').font('Helvetica');
+  try {
+    const [rows] = await query('SELECT * FROM rsvps ORDER BY id DESC');
+    let sumYes = 0, sumNo = 0, sumGuests = 0, sumMeat = 0, sumVegi = 0, sumKids = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.attending === 'yes') {
+        sumYes++;
+        sumGuests += r.total_guests || 0;
+        sumMeat += r.menu_meat || 0;
+        sumVegi += r.menu_vegi || 0;
+        sumKids += r.menu_kids || 0;
+      } else sumNo++;
     }
-    const isYes = r.attending === 'yes';
-    const dash = '–';
-    const merged = getMergedAllergies(r);
-    const cells = [
-      formatDatePdf(r.created_at),
-      (r.name || '').substring(0, 14),
-      (r.contact || '').substring(0, 14),
-      isYes ? 'Ja' : 'Nein',
-      isYes ? String(r.total_guests != null ? r.total_guests : dash) : dash,
-      isYes ? String(r.menu_meat != null ? r.menu_meat : dash) : dash,
-      isYes ? String(r.menu_vegi != null ? r.menu_vegi : dash) : dash,
-      isYes ? String(r.menu_kids != null ? r.menu_kids : dash) : dash,
-      merged.has ? 'ja' : 'nein',
-      merged.text.substring(0, 22)
-    ];
-    const rowY = doc.y;
-    x = 50;
-    for (let c = 0; c < cells.length; c++) {
-      doc.text(cells[c], x + 4, rowY + 5, { width: colW[c] - 6, ellipsis: true });
+
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="Rueckmeldungen_Cristina_Raffaele.pdf"');
+    doc.pipe(res);
+
+    const gold = '#c79a58';
+    const gray = '#5a5a5a';
+    const lightBg = '#f7f5f1';
+
+    doc.fontSize(22).fillColor(gold).text('Rückmeldungen', { align: 'center' });
+    doc.moveDown(0.3);
+    doc.fontSize(18).text('Cristina & Raffaele', { align: 'center' });
+    doc.moveDown(0.5);
+    doc.fontSize(11).fillColor(gray).text('Auswertung der Anmeldungen', { align: 'center' });
+    doc.moveDown(1.2);
+
+    const summaryY = doc.y;
+    doc.fontSize(12).fillColor('black').font('Helvetica-Bold').text('Zusammenfassung', 50, summaryY);
+    doc.moveDown(0.6);
+    const boxY = doc.y;
+    const boxH = 36;
+    const col1 = 50, col2 = 180, col3 = 310;
+    const labels = ['Zusagen', 'Absagen', 'Gesamtgäste', 'Menü Fleisch', 'Menü Vegetarisch', 'Menü Kinder'];
+    const values = [sumYes, sumNo, sumGuests, sumMeat, sumVegi, sumKids];
+    for (let i = 0; i < 6; i++) {
+      const x = i % 3 === 0 ? col1 : i % 3 === 1 ? col2 : col3;
+      const y = boxY + Math.floor(i / 3) * (boxH + 8);
+      doc.roundedRect(x, y, 120, boxH, 4).fillAndStroke(lightBg, gold);
+      doc.fontSize(9).fillColor(gray).font('Helvetica').text(labels[i], x + 10, y + 8, { width: 100 });
+      doc.fontSize(14).fillColor(gold).font('Helvetica-Bold').text(String(values[i]), x + 10, y + 22, { width: 100 });
+    }
+    doc.y = boxY + 2 * (boxH + 8) + 20;
+
+    doc.fontSize(12).fillColor('black').font('Helvetica-Bold').text('Details', 50, doc.y);
+    doc.moveDown(0.5);
+
+    const tableTop = doc.y;
+    const colW = [42, 52, 58, 28, 28, 28, 28, 28, 28, 70];
+    const headers = ['Datum', 'Name', 'Kontakt', 'Status', 'Gäste', 'Fleisch', 'Vegi', 'Kinder', 'Allerg.', 'Allergietext'];
+    const rowH = 22;
+    doc.rect(50, tableTop, colW.reduce((a, b) => a + b, 0), rowH).fill(gold);
+    let x = 50;
+    doc.fontSize(8).fillColor('white').font('Helvetica-Bold');
+    for (let c = 0; c < headers.length; c++) {
+      doc.text(headers[c], x + 4, tableTop + 6, { width: colW[c] - 6, ellipsis: true });
       x += colW[c];
     }
-    doc.y = rowY + rowH;
-  }
+    doc.y = tableTop + rowH;
 
-  doc.end();
+    doc.font('Helvetica').fillColor('black').fontSize(8);
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (doc.y > 700) {
+        doc.addPage();
+        doc.y = 50;
+        doc.rect(50, doc.y, colW.reduce((a, b) => a + b, 0), rowH).fill(gold);
+        x = 50;
+        doc.fillColor('white').font('Helvetica-Bold');
+        for (let c = 0; c < headers.length; c++) {
+          doc.text(headers[c], x + 4, doc.y + 6, { width: colW[c] - 6, ellipsis: true });
+          x += colW[c];
+        }
+        doc.y += rowH;
+        doc.fillColor('black').font('Helvetica');
+      }
+      const isYes = r.attending === 'yes';
+      const dash = '–';
+      const merged = getMergedAllergies(r);
+      const cells = [
+        formatDatePdf(r.created_at),
+        (r.name || '').substring(0, 14),
+        (r.contact || '').substring(0, 14),
+        isYes ? 'Ja' : 'Nein',
+        isYes ? String(r.total_guests != null ? r.total_guests : dash) : dash,
+        isYes ? String(r.menu_meat != null ? r.menu_meat : dash) : dash,
+        isYes ? String(r.menu_vegi != null ? r.menu_vegi : dash) : dash,
+        isYes ? String(r.menu_kids != null ? r.menu_kids : dash) : dash,
+        merged.has ? 'ja' : 'nein',
+        merged.text.substring(0, 22)
+      ];
+      const rowY = doc.y;
+      x = 50;
+      for (let c = 0; c < cells.length; c++) {
+        doc.text(cells[c], x + 4, rowY + 5, { width: colW[c] - 6, ellipsis: true });
+        x += colW[c];
+      }
+      doc.y = rowY + rowH;
+    }
+
+    doc.end();
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'PDF konnte nicht erstellt werden.' });
+  }
 });
 
 function formatDateExcel(createdAt) {
@@ -463,130 +488,141 @@ function formatDateExcel(createdAt) {
 
 app.get('/api/admin/rsvps.xlsx', async (req, res) => {
   if (!requireAdminToken(req, res)) return;
-  const rows = db.prepare('SELECT * FROM rsvps ORDER BY created_at DESC').all();
-  let sumYes = 0, sumNo = 0, sumGuests = 0, sumMeat = 0, sumVegi = 0, sumKids = 0;
-  for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
-    if (r.attending === 'yes') {
-      sumYes++;
-      sumGuests += r.total_guests || 0;
-      sumMeat += r.menu_meat || 0;
-      sumVegi += r.menu_vegi || 0;
-      sumKids += r.menu_kids || 0;
-    } else sumNo++;
-  }
+  try {
+    const [rows] = await query('SELECT * FROM rsvps ORDER BY id DESC');
+    let sumYes = 0, sumNo = 0, sumGuests = 0, sumMeat = 0, sumVegi = 0, sumKids = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (r.attending === 'yes') {
+        sumYes++;
+        sumGuests += r.total_guests || 0;
+        sumMeat += r.menu_meat || 0;
+        sumVegi += r.menu_vegi || 0;
+        sumKids += r.menu_kids || 0;
+      } else sumNo++;
+    }
 
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Hochzeit Cristina & Raffaele';
-  workbook.created = new Date();
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Hochzeit Cristina & Raffaele';
+    workbook.created = new Date();
 
-  const gold = 'FFC79A58';
-  const goldFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: gold } };
-  const lightBg = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F5F1' } };
-  const goldBorder = {
-    top: { style: 'thin', color: { argb: gold } },
-    left: { style: 'thin', color: { argb: gold } },
-    bottom: { style: 'thin', color: { argb: gold } },
-    right: { style: 'thin', color: { argb: gold } }
-  };
+    const gold = 'FFC79A58';
+    const goldFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: gold } };
+    const lightBg = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF7F5F1' } };
+    const goldBorder = {
+      top: { style: 'thin', color: { argb: gold } },
+      left: { style: 'thin', color: { argb: gold } },
+      bottom: { style: 'thin', color: { argb: gold } },
+      right: { style: 'thin', color: { argb: gold } }
+    };
 
-  const sheet = workbook.addWorksheet('Auswertung', { views: [{ showGridLines: true }] });
-  sheet.columns = [
-    { width: 14 }, { width: 18 }, { width: 18 }, { width: 8 }, { width: 8 },
-    { width: 8 }, { width: 10 }, { width: 8 }, { width: 8 }, { width: 24 }
-  ];
-
-  sheet.mergeCells(1, 1, 1, 10);
-  const titleCell = sheet.getCell(1, 1);
-  titleCell.value = 'Rückmeldungen';
-  titleCell.font = { size: 18, bold: true, color: { argb: gold } };
-  titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  sheet.mergeCells(2, 1, 2, 10);
-  const subtitleCell = sheet.getCell(2, 1);
-  subtitleCell.value = 'Cristina & Raffaele';
-  subtitleCell.font = { size: 14, color: { argb: gold } };
-  subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  sheet.mergeCells(3, 1, 3, 10);
-  const sub2 = sheet.getCell(3, 1);
-  sub2.value = 'Auswertung der Anmeldungen';
-  sub2.font = { size: 11, color: { argb: 'FF5A5A5A' } };
-  sub2.alignment = { horizontal: 'center', vertical: 'middle' };
-
-  sheet.getCell(5, 1).value = 'Zusammenfassung';
-  sheet.getCell(5, 1).font = { size: 12, bold: true };
-
-  const summaryLabels1 = ['Zusagen', 'Absagen', 'Gesamtgäste'];
-  const summaryVals1 = [sumYes, sumNo, sumGuests];
-  for (let c = 0; c < 3; c++) {
-    const cellLabel = sheet.getCell(6, c + 1);
-    const cellVal = sheet.getCell(7, c + 1);
-    cellLabel.value = summaryLabels1[c];
-    cellLabel.fill = lightBg;
-    cellLabel.border = goldBorder;
-    cellLabel.font = { size: 10, color: { argb: 'FF5A5A5A' } };
-    cellLabel.alignment = { vertical: 'middle', wrapText: true };
-    cellVal.value = summaryVals1[c];
-    cellVal.fill = lightBg;
-    cellVal.border = goldBorder;
-    cellVal.font = { size: 12, bold: true, color: { argb: gold } };
-    cellVal.alignment = { vertical: 'middle' };
-  }
-
-  const summaryLabels2 = ['Menü Fleisch', 'Menü Vegetarisch', 'Menü Kinder'];
-  const summaryVals2 = [sumMeat, sumVegi, sumKids];
-  for (let c = 0; c < 3; c++) {
-    const cellLabel = sheet.getCell(8, c + 1);
-    const cellVal = sheet.getCell(9, c + 1);
-    cellLabel.value = summaryLabels2[c];
-    cellLabel.fill = lightBg;
-    cellLabel.border = goldBorder;
-    cellLabel.font = { size: 10, color: { argb: 'FF5A5A5A' } };
-    cellLabel.alignment = { vertical: 'middle', wrapText: true };
-    cellVal.value = summaryVals2[c];
-    cellVal.fill = lightBg;
-    cellVal.border = goldBorder;
-    cellVal.font = { size: 12, bold: true, color: { argb: gold } };
-    cellVal.alignment = { vertical: 'middle' };
-  }
-
-  sheet.getCell(11, 1).value = 'Details';
-  sheet.getCell(11, 1).font = { size: 12, bold: true };
-
-  const detailHeaders = ['Datum', 'Name', 'Kontakt', 'Status', 'Gäste', 'Fleisch', 'Vegetarisch', 'Kinder', 'Allergien', 'Allergietext'];
-  for (let c = 1; c <= 10; c++) {
-    const cell = sheet.getCell(12, c);
-    cell.value = detailHeaders[c - 1];
-    cell.fill = goldFill;
-    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
-  }
-
-  rows.forEach((r, i) => {
-    const merged = getMergedAllergies(r);
-    const row = sheet.getRow(13 + i);
-    row.values = [
-      formatDateExcel(r.created_at),
-      r.name || '',
-      r.contact || '',
-      r.attending === 'yes' ? 'Ja' : 'Nein',
-      r.total_guests != null ? r.total_guests : '',
-      r.menu_meat != null ? r.menu_meat : '',
-      r.menu_vegi != null ? r.menu_vegi : '',
-      r.menu_kids != null ? r.menu_kids : '',
-      merged.has ? 'ja' : 'nein',
-      merged.text || ''
+    const sheet = workbook.addWorksheet('Auswertung', { views: [{ showGridLines: true }] });
+    sheet.columns = [
+      { width: 14 }, { width: 18 }, { width: 18 }, { width: 8 }, { width: 8 },
+      { width: 8 }, { width: 10 }, { width: 8 }, { width: 8 }, { width: 24 }
     ];
-    row.alignment = { vertical: 'middle', wrapText: true };
+
+    sheet.mergeCells(1, 1, 1, 10);
+    const titleCell = sheet.getCell(1, 1);
+    titleCell.value = 'Rückmeldungen';
+    titleCell.font = { size: 18, bold: true, color: { argb: gold } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    sheet.mergeCells(2, 1, 2, 10);
+    const subtitleCell = sheet.getCell(2, 1);
+    subtitleCell.value = 'Cristina & Raffaele';
+    subtitleCell.font = { size: 14, color: { argb: gold } };
+    subtitleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    sheet.mergeCells(3, 1, 3, 10);
+    const sub2 = sheet.getCell(3, 1);
+    sub2.value = 'Auswertung der Anmeldungen';
+    sub2.font = { size: 11, color: { argb: 'FF5A5A5A' } };
+    sub2.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    sheet.getCell(5, 1).value = 'Zusammenfassung';
+    sheet.getCell(5, 1).font = { size: 12, bold: true };
+
+    const summaryLabels1 = ['Zusagen', 'Absagen', 'Gesamtgäste'];
+    const summaryVals1 = [sumYes, sumNo, sumGuests];
+    for (let c = 0; c < 3; c++) {
+      const cellLabel = sheet.getCell(6, c + 1);
+      const cellVal = sheet.getCell(7, c + 1);
+      cellLabel.value = summaryLabels1[c];
+      cellLabel.fill = lightBg;
+      cellLabel.border = goldBorder;
+      cellLabel.font = { size: 10, color: { argb: 'FF5A5A5A' } };
+      cellLabel.alignment = { vertical: 'middle', wrapText: true };
+      cellVal.value = summaryVals1[c];
+      cellVal.fill = lightBg;
+      cellVal.border = goldBorder;
+      cellVal.font = { size: 12, bold: true, color: { argb: gold } };
+      cellVal.alignment = { vertical: 'middle' };
+    }
+
+    const summaryLabels2 = ['Menü Fleisch', 'Menü Vegetarisch', 'Menü Kinder'];
+    const summaryVals2 = [sumMeat, sumVegi, sumKids];
+    for (let c = 0; c < 3; c++) {
+      const cellLabel = sheet.getCell(8, c + 1);
+      const cellVal = sheet.getCell(9, c + 1);
+      cellLabel.value = summaryLabels2[c];
+      cellLabel.fill = lightBg;
+      cellLabel.border = goldBorder;
+      cellLabel.font = { size: 10, color: { argb: 'FF5A5A5A' } };
+      cellLabel.alignment = { vertical: 'middle', wrapText: true };
+      cellVal.value = summaryVals2[c];
+      cellVal.fill = lightBg;
+      cellVal.border = goldBorder;
+      cellVal.font = { size: 12, bold: true, color: { argb: gold } };
+      cellVal.alignment = { vertical: 'middle' };
+    }
+
+    sheet.getCell(11, 1).value = 'Details';
+    sheet.getCell(11, 1).font = { size: 12, bold: true };
+
+    const detailHeaders = ['Datum', 'Name', 'Kontakt', 'Status', 'Gäste', 'Fleisch', 'Vegetarisch', 'Kinder', 'Allergien', 'Allergietext'];
+    for (let c = 1; c <= 10; c++) {
+      const cell = sheet.getCell(12, c);
+      cell.value = detailHeaders[c - 1];
+      cell.fill = goldFill;
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+    }
+
+    rows.forEach((r, i) => {
+      const merged = getMergedAllergies(r);
+      const row = sheet.getRow(13 + i);
+      row.values = [
+        formatDateExcel(r.created_at),
+        r.name || '',
+        r.contact || '',
+        r.attending === 'yes' ? 'Ja' : 'Nein',
+        r.total_guests != null ? r.total_guests : '',
+        r.menu_meat != null ? r.menu_meat : '',
+        r.menu_vegi != null ? r.menu_vegi : '',
+        r.menu_kids != null ? r.menu_kids : '',
+        merged.has ? 'ja' : 'nein',
+        merged.text || ''
+      ];
+      row.alignment = { vertical: 'middle', wrapText: true };
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="Rückmeldungen_Cristina_Raffaele.xlsx"');
+    res.send(buffer);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'Excel konnte nicht erstellt werden.' });
+  }
+});
+
+initDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log('RSVP-Server läuft auf Port', PORT);
+    });
+  })
+  .catch((err) => {
+    console.error('Datenbank-Initialisierung fehlgeschlagen:', err.message);
+    process.exit(1);
   });
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  res.setHeader('Content-Disposition', 'attachment; filename="Rückmeldungen_Cristina_Raffaele.xlsx"');
-  res.send(buffer);
-});
-
-app.listen(PORT, () => {
-  console.log('RSVP-Server läuft auf Port', PORT);
-});
