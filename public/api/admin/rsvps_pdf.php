@@ -1,6 +1,7 @@
 <?php
 /**
  * GET /api/admin/rsvps_pdf.php?token=… – PDF-Export
+ * Hosttech: httpdocs/api/admin/rsvps_pdf.php
  */
 
 require_once __DIR__ . '/../config.php';
@@ -43,8 +44,7 @@ function getMergedAllergies($r) {
             $parts[] = (isset($g['name']) && $g['name'] !== '' ? $g['name'] : 'Gast') . ': ' . $gText;
         }
     }
-    $text = implode('; ', $parts);
-    return ['has' => count($parts) > 0, 'text' => $text];
+    return ['has' => count($parts) > 0, 'text' => implode('; ', $parts), 'lines' => $parts];
 }
 
 try {
@@ -64,6 +64,9 @@ $sumGuests = 0;
 $sumMeat = 0;
 $sumVegi = 0;
 $sumKids = 0;
+$allAllergyLines = [];
+$zusagenRows = [];
+
 foreach ($rows as $r) {
     if ($r->attending === 'yes') {
         $sumYes++;
@@ -71,14 +74,37 @@ foreach ($rows as $r) {
         $sumMeat += (int) ($r->menu_meat ?? 0);
         $sumVegi += (int) ($r->menu_vegi ?? 0);
         $sumKids += (int) ($r->menu_kids ?? 0);
+        $zusagenRows[] = $r;
     } else {
         $sumNo++;
+    }
+    $merged = getMergedAllergies($r);
+    foreach ($merged['lines'] as $line) {
+        $allAllergyLines[] = $line;
     }
 }
 
 $gold = '#c79a58';
 $gray = '#5a5a5a';
 $lightBg = '#f7f5f1';
+
+$allergyHtml = '';
+foreach ($allAllergyLines as $line) {
+    $allergyHtml .= '<p class="allergy-line">' . htmlspecialchars($line, ENT_QUOTES, 'UTF-8') . '</p>';
+}
+if ($allergyHtml === '') {
+    $allergyHtml = '<p class="allergy-line allergy-none">Keine Allergien gemeldet.</p>';
+}
+
+$zusagenTableHtml = '';
+foreach ($zusagenRows as $r) {
+    $name = htmlspecialchars(mb_substr((string) ($r->name ?? ''), 0, 30), ENT_QUOTES, 'UTF-8');
+    $g = $r->total_guests !== null ? (int) $r->total_guests : '–';
+    $m = $r->menu_meat !== null ? (int) $r->menu_meat : '–';
+    $v = $r->menu_vegi !== null ? (int) $r->menu_vegi : '–';
+    $k = $r->menu_kids !== null ? (int) $r->menu_kids : '–';
+    $zusagenTableHtml .= '<tr><td>' . $name . '</td><td>' . $g . '</td><td>' . $m . '</td><td>' . $v . '</td><td>' . $k . '</td></tr>';
+}
 
 $html = '
 <!DOCTYPE html>
@@ -87,23 +113,23 @@ $html = '
 <meta charset="UTF-8">
 <style>
 body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 20px; }
-h1 { color: ' . $gold . '; font-size: 22px; text-align: center; margin-bottom: 4px; }
-h2 { color: ' . $gold . '; font-size: 18px; text-align: center; margin-bottom: 4px; }
+h1 { color: ' . $gold . '; font-size: 22px; text-align: center; margin-bottom: 8px; }
 .sub { color: ' . $gray . '; font-size: 11px; text-align: center; margin-bottom: 24px; }
 .section { font-weight: bold; font-size: 12px; margin: 16px 0 8px 0; }
 .box-wrap { margin-bottom: 20px; }
 .box { display: inline-block; width: 120px; padding: 10px; margin: 4px; border-radius: 4px; border: 1px solid ' . $gold . '; background: ' . $lightBg . '; vertical-align: top; }
 .box-label { font-size: 9px; color: ' . $gray . '; }
 .box-value { font-size: 14px; font-weight: bold; color: ' . $gold . '; }
-table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 8px; }
+.allergy-line { margin: 4px 0; font-size: 10px; }
+.allergy-none { color: ' . $gray . '; font-style: italic; }
+table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 9px; }
 th { background: ' . $gold . '; color: white; padding: 6px 4px; text-align: left; font-weight: bold; }
 td { padding: 5px 4px; border-bottom: 1px solid #eee; }
 tr:nth-child(even) { background: #fafafa; }
 </style>
 </head>
 <body>
-<h1>Rückmeldungen</h1>
-<h2>Cristina & Raffaele</h2>
+<h1>Rückmeldungen – Cristina & Raffaele</h1>
 <p class="sub">Auswertung der Anmeldungen</p>
 
 <p class="section">Zusammenfassung</p>
@@ -116,45 +142,15 @@ tr:nth-child(even) { background: #fafafa; }
   <div class="box"><div class="box-label">Menü Kinder</div><div class="box-value">' . (int) $sumKids . '</div></div>
 </div>
 
-<p class="section">Details</p>
+<p class="section">Allergien</p>
+' . $allergyHtml . '
+
+<p class="section">Zusagen (Übersicht)</p>
 <table>
-<thead>
-<tr>
-  <th>Datum</th><th>Name</th><th>Kontakt</th><th>Status</th><th>Gäste</th>
-  <th>Fleisch</th><th>Vegi</th><th>Kinder</th><th>Allerg.</th><th>Allergietext</th>
-</tr>
-</thead>
-<tbody>';
-
-$dash = '–';
-foreach ($rows as $r) {
-    $isYes = $r->attending === 'yes';
-    $merged = getMergedAllergies($r);
-    $date = formatDatePdf($r->created_at ?? '');
-    $name = mb_substr((string) ($r->name ?? ''), 0, 14);
-    $contact = mb_substr((string) ($r->contact ?? ''), 0, 14);
-    $status = $isYes ? 'Ja' : 'Nein';
-    $guests = $isYes ? (string) ($r->total_guests !== null ? $r->total_guests : $dash) : $dash;
-    $meat = $isYes ? (string) ($r->menu_meat !== null ? $r->menu_meat : $dash) : $dash;
-    $vegi = $isYes ? (string) ($r->menu_vegi !== null ? $r->menu_vegi : $dash) : $dash;
-    $kids = $isYes ? (string) ($r->menu_kids !== null ? $r->menu_kids : $dash) : $dash;
-    $allerg = $merged['has'] ? 'ja' : 'nein';
-    $allergText = mb_substr($merged['text'], 0, 22);
-    $html .= '<tr>';
-    $html .= '<td>' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($name, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($contact, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($status, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($guests, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($meat, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($vegi, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($kids, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($allerg, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '<td>' . htmlspecialchars($allergText, ENT_QUOTES, 'UTF-8') . '</td>';
-    $html .= '</tr>';
-}
-
-$html .= '</tbody></table></body></html>';
+<thead><tr><th>Name</th><th>Gäste</th><th>Fleisch</th><th>Vegi</th><th>Kinder</th></tr></thead>
+<tbody>' . $zusagenTableHtml . '</tbody>
+</table>
+</body></html>';
 
 try {
     $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 15, 'margin_right' => 15, 'margin_top' => 15, 'margin_bottom' => 15]);

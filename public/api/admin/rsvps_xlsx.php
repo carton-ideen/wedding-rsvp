@@ -1,6 +1,7 @@
 <?php
 /**
  * GET /api/admin/rsvps_xlsx.php?token=… – Excel-Export
+ * Hosttech: httpdocs/api/admin/rsvps_xlsx.php
  */
 
 require_once __DIR__ . '/../config.php';
