@@ -2,6 +2,12 @@
 
 Elegante RSVP-Webseite für Hochzeits-Einladungen mit Admin-Bereich, Tischplan und Export (PDF/Excel).
 
+**PHP-Deployment (Hosttech):** Der Ordner **httpdocs** ist die komplette Web-Anwendung. Inhalt von `httpdocs/` auf den Server (Document Root / httpdocs) kopieren. Konfiguration, Assets und Composer siehe **DEPLOY.md**.
+
+---
+
+## Lokale Entwicklung (Node, optional)
+
 ## Voraussetzungen
 
 - Node.js >= 18
