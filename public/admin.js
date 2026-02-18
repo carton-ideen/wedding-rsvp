@@ -91,8 +91,8 @@
   function updateDownloadLinks() {
     var q = currentToken ? '?token=' + encodeURIComponent(currentToken) : '';
     if (currentToken) {
-      xlsxLink.href = '/api/admin/rsvps.xlsx' + q;
-      pdfLink.href = '/api/admin/rsvps.pdf' + q;
+      xlsxLink.href = '/api/admin/rsvps_xlsx.php' + q;
+      pdfLink.href = '/api/admin/rsvps_pdf.php' + q;
       xlsxLink.removeAttribute('aria-disabled');
       pdfLink.removeAttribute('aria-disabled');
     } else {
