@@ -1,0 +1,7 @@
+RewriteEngine On
+
+RewriteRule ^health$ health.php [L,QSA]
+RewriteRule ^api/rsvp$ api/rsvp.php [L,QSA]
+RewriteRule ^api/admin/login$ api/admin/login.php [L,QSA]
+RewriteRule ^api/admin/rsvps$ api/admin/rsvps.php [L,QSA]
+RewriteRule ^api/admin/tischplan$ api/admin/tischplan.php [L,QSA]

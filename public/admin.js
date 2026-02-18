@@ -151,7 +151,7 @@
   function deleteRsvp(id, btn) {
     if (!currentToken || !confirm('Diese Anmeldung wirklich löschen?')) return;
     btn.disabled = true;
-    var url = '/api/admin/rsvps/' + id + '?token=' + encodeURIComponent(currentToken);
+    var url = '/api/admin/rsvps?id=' + encodeURIComponent(id) + '&token=' + encodeURIComponent(currentToken);
     fetch(url, { method: 'DELETE' })
       .then(function (res) {
         return res.json().then(function (data) {
