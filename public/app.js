@@ -259,7 +259,7 @@
         var btn = declineForm.querySelector('button[type="submit"]');
         btn.disabled = true;
         declineFormStatus.textContent = 'Wird gesendet …';
-        fetch('/api/rsvp', {
+        fetch('/api/rsvp.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: name, attending: 'no' })
@@ -367,7 +367,7 @@
     btn.disabled = true;
     setStatus('Wird gesendet …');
 
-    fetch('/api/rsvp', {
+    fetch('/api/rsvp.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)

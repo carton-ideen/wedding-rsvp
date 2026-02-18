@@ -151,7 +151,7 @@
   function deleteRsvp(id, btn) {
     if (!currentToken || !confirm('Diese Anmeldung wirklich löschen?')) return;
     btn.disabled = true;
-    var url = '/api/admin/rsvps?id=' + encodeURIComponent(id) + '&token=' + encodeURIComponent(currentToken);
+    var url = '/api/admin/rsvps.php?id=' + encodeURIComponent(id) + '&token=' + encodeURIComponent(currentToken);
     fetch(url, { method: 'DELETE' })
       .then(function (res) {
         return res.json().then(function (data) {
@@ -274,7 +274,7 @@
     loginBtn.disabled = true;
     setStatus('Lade…');
 
-    var url = '/api/admin/rsvps?token=' + encodeURIComponent(token);
+    var url = '/api/admin/rsvps.php?token=' + encodeURIComponent(token);
     fetch(url)
       .then(function (res) {
         if (res.status === 401) {
@@ -320,7 +320,7 @@
     loginBtn.disabled = true;
     setStatus('Anmelden…');
 
-    fetch('/api/admin/login', {
+    fetch('/api/admin/login.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: password })
@@ -615,7 +615,7 @@
 
   function loadTischplan() {
     if (!currentToken) return;
-    fetch('/api/admin/tischplan?token=' + encodeURIComponent(currentToken))
+    fetch('/api/admin/tischplan.php?token=' + encodeURIComponent(currentToken))
       .then(function (res) {
         if (res.status === 401) return null;
         return res.json();
@@ -975,7 +975,7 @@
         var k = String(key).indexOf(':') >= 0 ? key : key + ':0';
         assignmentsToSave[k] = tid;
       }
-      fetch('/api/admin/tischplan?token=' + encodeURIComponent(currentToken), {
+      fetch('/api/admin/tischplan.php?token=' + encodeURIComponent(currentToken), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tables: tischplanPlan.tables, assignments: assignmentsToSave })
