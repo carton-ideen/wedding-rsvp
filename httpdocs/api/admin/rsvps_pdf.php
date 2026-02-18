@@ -153,9 +153,28 @@ tr:nth-child(even) { background: #fafafa; }
 </body></html>';
 
 try {
-    $mpdf = new \Mpdf\Mpdf(['mode' => 'utf-8', 'format' => 'A4', 'margin_left' => 15, 'margin_right' => 15, 'margin_top' => 15, 'margin_bottom' => 15]);
-    $mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::HTML_BODY);
-    $mpdf->Output('Rueckmeldungen_Cristina_Raffaele.pdf', \Mpdf\Output\Destination::DOWNLOAD);
+    $mpdf = new \Mpdf\Mpdf([
+        'mode' => 'utf-8',
+        'format' => 'A4',
+        'margin_left' => 15,
+        'margin_right' => 15,
+        'margin_top' => 15,
+        'margin_bottom' => 15,
+    ]);
+    // Vollständiges Dokument parsen, damit <style> im <head> angewendet wird (nicht als Text erscheint)
+    $mpdf->WriteHTML($html, \Mpdf\HTMLParserMode::DEFAULT_MODE);
+    $pdfOutput = $mpdf->Output('', \Mpdf\Output\Destination::STRING_RETURN);
+
+    // Klare Download-Header setzen (vermindert „unsicher“-Warnung im Browser)
+    header('Content-Type: application/pdf; charset=binary');
+    header('Content-Disposition: attachment; filename="Rueckmeldungen_Cristina_Raffaele.pdf"');
+    header('Content-Length: ' . strlen($pdfOutput));
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: private, no-cache, no-store, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    echo $pdfOutput;
+    exit;
 } catch (Throwable $e) {
     http_response_code(500);
     header('Content-Type: application/json; charset=utf-8');
